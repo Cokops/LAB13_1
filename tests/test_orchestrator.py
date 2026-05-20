@@ -233,3 +233,4 @@ async def test_cleanup_stale_agents(orchestrator):
     assert "agent-2" in orchestrator.agents
     assert "agent-3" in orchestrator.agents
     assert len(orchestrator.agents) == 2
+

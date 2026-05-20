@@ -84,3 +84,28 @@ def test_scale_up_failure():
         with patch('orchestrator.api.orchestrator', mock_orch):
             response = client.post("/scale/up")
             assert response.status_code == 500
+
+
+def test_scale_up_success():
+    """Тест успешного масштабирования"""
+    with patch('orchestrator.orchestrator.Orchestrator') as mock_orch_class:
+        mock_orch = MagicMock()
+        
+        async def mock_manual_scale_up():
+            return "Scaled up to 4 agents"
+        
+        mock_orch.manual_scale_up = mock_manual_scale_up
+        mock_orch_class.return_value = mock_orch
+        
+        with patch('orchestrator.api.orchestrator', mock_orch):
+            response = client.post("/scale/up")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "success"
+
+def test_health_check():
+    """Тест health check"""
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
