@@ -1,0 +1,67 @@
+version: '3.8'
+
+networks:
+  monitoring-net:
+    driver: bridge
+
+volumes:
+  ollama_models:
+
+services:
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # Monitoring port
+    networks:
+      - monitoring-net
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["-js"]  # Enable JetStream
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - monitoring-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["--appendonly", "yes"]  # Persistent storage
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # UI
+      - "4317:4317"      # OTLP gRPC
+      - "4318:4318"      # OTLP HTTP
+    networks:
+      - monitoring-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:16686"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - monitoring-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:11434"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Команда для предварительной загрузки модели:
+# docker-compose exec ollama ollama pull llama3.2:1b

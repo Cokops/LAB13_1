@@ -81,7 +81,7 @@ func main() {
 
 	// Subscribe to monitoring tasks
 	_, err = natsConn.QueueSubscribe("tasks.monitoring", "monitoring_group", func(msg *nats.Msg) {
-		go handleMonitoringTask(ctx, msg, natsConn, redisClient, *agentID, taskCounts)
+		go handleMonitoringTask(ctx, msg, natsConn, redisClient, taskCounts)
 	})
 	if err != nil {
 		log.Fatalf("Failed to subscribe to tasks.monitoring: %v", err)
@@ -100,7 +100,6 @@ func handleMonitoringTask(
 	msg *nats.Msg,
 	natsConn *nats.Conn,
 	redisClient *state.Client,
-	agentID string,
 	taskCounts map[string]int,
 ) {
 	tracer := tracing.Tracer
