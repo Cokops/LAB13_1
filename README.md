@@ -51,6 +51,7 @@ HTTP ответ ← auto_recovery ← send_alert ← (есть аномалия)
 
 ## Структура проекта
 
+```
 LAB13_1/
 ├── agent/ # Go-агент (универсальный)
 │ ├── internal/
@@ -62,8 +63,9 @@ LAB13_1/
 │ │ ├── tracing/ # OpenTelemetry
 │ │ └── auction/ # Аукцион
 │ ├── main.go
+│ ├── coverage_go.txt # Покрытие go тестов
 │ └── go.mod
-├── orchestrator/ # Оркестратор на Python
+├── orchestrator/ # Оркестратор: маршрутизация, аукцион, масштабирование
 │ ├── scripts/
 │ │ ├── scale.sh # Bash-скрипт масштабирования
 │ │ └── scale.py # Python-скрипт (Docker SDK)
@@ -84,9 +86,11 @@ LAB13_1/
 │ └── pytest.ini
 ├── docker-compose.yml # NATS, Redis, Jaeger, Ollama
 ├── .gitignore
+├── coverage.txt # Покрытие тестов на python
 ├── setup.py
-├── PROMPT_LOG.md # Журнал промптов
+├── PROMPT_LOG.md # Журнал выполненных промптов
 └── README.md
+```
 
 ## Мониторинг и визуализация
 
