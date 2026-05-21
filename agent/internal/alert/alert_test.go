@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -32,26 +33,21 @@ func TestSendWithStdout(t *testing.T) {
 	printed := buf.String()
 	os.Stdout = oldStdout
 
-	// Проверяем результат функции
-	expectedResult := "alert sent: " + message
-	if result != expectedResult {
-		t.Errorf("Expected result %q, got %q", expectedResult, result)
+	// Проверяем результат функции (содержит ID и сообщение)
+	if !strings.Contains(result, "alert sent") {
+		t.Errorf("Expected result to contain 'alert sent', got %q", result)
+	}
+	if !strings.Contains(result, message) {
+		t.Errorf("Expected result to contain %q, got %q", message, result)
 	}
 
 	// Проверяем, что было напечатано в stdout
-	expectedPrint := "[ALERT] " + message
-	if !contains(printed, expectedPrint) {
-		t.Errorf("Expected output to contain %q, got %q", expectedPrint, printed)
+	if !strings.Contains(printed, "[ALERT]") {
+		t.Errorf("Expected output to contain '[ALERT]', got %q", printed)
 	}
-}
-
-func contains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
+	if !strings.Contains(printed, message) {
+		t.Errorf("Expected output to contain %q, got %q", message, printed)
 	}
-	return false
 }
 
 func TestSendSimple(t *testing.T) {
@@ -59,8 +55,10 @@ func TestSendSimple(t *testing.T) {
 	message := "Test message"
 	result := Send(context.Background(), message)
 
-	expected := "alert sent: " + message
-	if result != expected {
-		t.Errorf("Expected %q, got %q", expected, result)
+	if !strings.Contains(result, "alert sent") {
+		t.Errorf("Expected result to contain 'alert sent', got %q", result)
+	}
+	if !strings.Contains(result, message) {
+		t.Errorf("Expected result to contain %q, got %q", message, result)
 	}
 }

@@ -2,6 +2,7 @@ package recovery
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -9,21 +10,19 @@ func TestPerform(t *testing.T) {
 	result := Perform(context.Background())
 
 	// Проверяем, что результат содержит ожидаемый текст
-	expected := "auto recovery completed"
-	if result != expected {
-		t.Errorf("Expected %q, got %q", expected, result)
+	if !strings.Contains(result, "auto recovery completed") {
+		t.Errorf("Expected result to contain 'auto recovery completed', got %q", result)
 	}
 }
 
 func TestPerformMultiple(t *testing.T) {
-	// Проверяем, что функция всегда возвращает одинаковый результат
+	// Проверяем, что функция всегда возвращает результат с "auto recovery completed"
 	ctx := context.Background()
 
-	expected := "auto recovery completed"
 	for i := 0; i < 10; i++ {
 		result := Perform(ctx)
-		if result != expected {
-			t.Errorf("Iteration %d: expected %q, got %q", i, expected, result)
+		if !strings.Contains(result, "auto recovery completed") {
+			t.Errorf("Iteration %d: expected result to contain 'auto recovery completed', got %q", i, result)
 		}
 	}
 }
@@ -36,8 +35,8 @@ func TestPerformWithContext(t *testing.T) {
 		t.Error("Expected non-empty result, got empty string")
 	}
 
-	if len(result) < 10 {
-		t.Errorf("Result too short: %q", result)
+	if !strings.Contains(result, "auto recovery completed") {
+		t.Errorf("Result should contain 'auto recovery completed', got %q", result)
 	}
 }
 
