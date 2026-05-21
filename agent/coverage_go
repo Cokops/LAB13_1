@@ -1,0 +1,8 @@
+ok      agent   (cached)        coverage: 1.7% of statements
+ok      agent/internal/alert    (cached)        coverage: 100.0% of statements
+ok      agent/internal/anomaly  (cached)        coverage: 100.0% of statements
+ok      agent/internal/auction  (cached)        coverage: 80.0% of statements
+ok      agent/internal/metrics  (cached)        coverage: 100.0% of statements
+ok      agent/internal/recovery (cached)        coverage: 100.0% of statements
+ok      agent/internal/state    (cached)        coverage: 85.0% of statements
+ok      agent/internal/tracing  (cached)        coverage: 81.8% of statements

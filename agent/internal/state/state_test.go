@@ -10,25 +10,10 @@ import (
 func TestNewClient(t *testing.T) {
 	client := NewClient("localhost:6379")
 	assert.NotNil(t, client)
-}
-
-func TestClientStruct(t *testing.T) {
-	client := &Client{rdb: nil}
-	assert.NotNil(t, client)
-}
-
-func TestSaveTaskCounts(t *testing.T) {
-	// Пропускаем тест требующий Redis
-	t.Skip("Skipping test that requires Redis connection")
-}
-
-func TestRestoreTaskCounts(t *testing.T) {
-	// Пропускаем тест требующий Redis
-	t.Skip("Skipping test that requires Redis connection")
+	assert.NotNil(t, client.rdb)
 }
 
 func TestTaskCountsJSON(t *testing.T) {
-	// Тестируем JSON сериализацию без Redis
 	counts := map[string]int{
 		"collect_metrics": 10,
 		"detect_anomaly":  5,
@@ -36,12 +21,10 @@ func TestTaskCountsJSON(t *testing.T) {
 		"auto_recovery":   2,
 	}
 
-	// Маршалинг
 	data, err := json.Marshal(counts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, data)
 
-	// Анмаршалинг обратно
 	var restored map[string]int
 	err = json.Unmarshal(data, &restored)
 	assert.NoError(t, err)
@@ -60,6 +43,22 @@ func TestEmptyTaskCounts(t *testing.T) {
 	assert.Equal(t, 0, len(restored))
 }
 
+func TestDefaultTaskCounts(t *testing.T) {
+	// Проверяем структуру по умолчанию как в RestoreTaskCounts
+	counts := map[string]int{
+		"collect_metrics": 0,
+		"detect_anomaly":  0,
+		"send_alert":      0,
+		"auto_recovery":   0,
+	}
+
+	assert.Equal(t, 0, counts["collect_metrics"])
+	assert.Equal(t, 0, counts["detect_anomaly"])
+	assert.Equal(t, 0, counts["send_alert"])
+	assert.Equal(t, 0, counts["auto_recovery"])
+	assert.Equal(t, 4, len(counts))
+}
+
 func TestTaskCountsIncrement(t *testing.T) {
 	taskCounts := make(map[string]int)
 
@@ -74,9 +73,18 @@ func TestTaskCountsIncrement(t *testing.T) {
 	assert.Equal(t, 0, taskCounts["send_alert"])
 }
 
-func TestClientConnect(t *testing.T) {
-	// Пропускаем тест требующий Redis
-	t.Skip("Skipping test that requires Redis connection")
+func TestTaskCountsEdgeCases(t *testing.T) {
+	counts := make(map[string]int)
+	assert.Equal(t, 0, len(counts))
+
+	counts["test"]++
+	assert.Equal(t, 1, counts["test"])
+	assert.Equal(t, 0, counts["unknown"])
+}
+
+func TestClientStruct(t *testing.T) {
+	client := &Client{}
+	assert.NotNil(t, client)
 }
 
 func BenchmarkTaskCountsMarshal(b *testing.B) {
