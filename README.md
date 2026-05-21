@@ -1,36 +1,110 @@
-# DevOps Project with Docker Compose
+# Лабораторная работа №13 — Мультиагентная система мониторинга IT-инфраструктуры
 
-This project sets up a monitoring and AI infrastructure using Docker Compose.
+## Данные студента
 
-## Services
+| Поле | Значение |
+|------|----------|
+| ФИО | Артём (Cokops) |
+| Группа | — |
+| Вариант | 5 |
+| Предметная область | Мониторинг IT-инфраструктуры |
+| Сложность | Повышенная |
 
-- **NATS**: Messaging system with JetStream enabled
-- **Redis**: In-memory data store with persistence
-- **Jaeger**: Distributed tracing and monitoring (UI on port 16686)
-- **Ollama**: LLM inference service
+## Описание системы
 
-## Setup
+Система реализует автоматизированный мониторинг IT-инфраструктуры на основе мультиагентного pipeline. Входящий запрос на мониторинг последовательно обрабатывается четырьмя типами задач, которые выполняются универсальным Go-агентом:
 
-1. Start services:
-   ```bash
-   docker-compose up -d
-   ```
+| Тип задачи | Роль в pipeline |
+|------------|----------------|
+| `collect_metrics` | Собирает метрики системы (CPU, память, диск) |
+| `detect_anomaly` | Анализирует метрики, выявляет аномалии по пороговым значениям |
+| `send_alert` | Отправляет оповещение при обнаружении аномалий |
+| `auto_recovery` | Выполняет автоматическое восстановление (эмуляция) |
 
-2. Pull LLM model:
-   ```bash
-   docker-compose exec ollama ollama pull llama3.2:1b
-   ```
+**Ключевые особенности:**
+- **Универсальный агент** на Go — один бинарник умеет выполнять все 4 типа задач
+- **Аукционное распределение** — агенты торгуются за задачу, оркестратор выбирает лучшего
+- **Динамическое масштабирование** — при перегрузке автоматически запускаются новые экземпляры агентов через Docker API
+- **LLM-агент** на Python анализирует аномалии через Ollama (локальная LLM)
+- **Полная трассировка** через OpenTelemetry + Jaeger
 
-3. Check status:
-   ```bash
-   docker-compose ps
-   docker-compose logs ollama
-   ```
+## Pipeline
+HTTP запрос → Оркестратор → collect_metrics → detect_anomaly
+│
+▼
+HTTP ответ ← auto_recovery ← send_alert ← (есть аномалия)
 
-## Networks
 
-All services are connected to `monitoring-net` for inter-service communication.
+## Технологический стек
 
-## Volumes
+| Компонент | Версия | Назначение |
+|-----------|--------|------------|
+| Go | 1.21 | Универсальный агент (ядро логики) |
+| Python | 3.12 | Оркестратор, LLM-агент, веб-дашборд |
+| NATS | latest | Брокер сообщений между агентами |
+| Redis | alpine | Хранение состояния агентов и кэш LLM |
+| Jaeger | all-in-one | Распределённая трассировка запросов |
+| Ollama | latest | Локальная LLM (llama3.2:1b) |
+| FastAPI | — | REST API оркестратора |
+| Streamlit | — | Веб-дашборд мониторинга |
+| Docker Compose | — | Оркестрация контейнеров |
 
-- `ollama_models`: Persistent storage for Ollama models
+## Структура проекта
+
+LAB13_1/
+├── agent/ # Go-агент (универсальный)
+│ ├── internal/
+│ │ ├── metrics/ # Сбор метрик
+│ │ ├── anomaly/ # Детекция аномалий
+│ │ ├── alert/ # Оповещение
+│ │ ├── recovery/ # Автовосстановление
+│ │ ├── state/ # Redis-состояние
+│ │ ├── tracing/ # OpenTelemetry
+│ │ └── auction/ # Аукцион
+│ ├── main.go
+│ └── go.mod
+├── orchestrator/ # Оркестратор на Python
+│ ├── scripts/
+│ │ ├── scale.sh # Bash-скрипт масштабирования
+│ │ └── scale.py # Python-скрипт (Docker SDK)
+│ ├── api.py # FastAPI эндпоинты
+│ ├── orchestrator.py # Основная логика
+│ └── requirements.txt
+├── llm_agent/ # LLM-агент (Python + Ollama)
+│ ├── llm_agent.py
+│ ├── requirements.txt
+│ └── setup.py
+├── dashboard/ # Веб-дашборд (Streamlit)
+│ ├── dashboard.py
+│ └── requirements.txt
+├── tests/ # Python-тесты
+│ ├── test_orchestrator.py
+│ ├── test_llm_agent.py
+│ ├── test_api.py
+│ └── pytest.ini
+├── docker-compose.yml # NATS, Redis, Jaeger, Ollama
+├── .gitignore
+├── setup.py
+├── PROMPT_LOG.md # Журнал промптов
+└── README.md
+
+## Мониторинг и визуализация
+
+| Инструмент | URL | Назначение |
+|------------|-----|------------|
+| Streamlit Dashboard | http://localhost:8501 | Статус агентов, график очереди, отправка задач |
+| Jaeger UI | http://localhost:16686 | Поиск и просмотр трассировок |
+| NATS Monitoring | http://localhost:8222 | Статистика очередей и подписок |
+
+## Выполненные требования
+
+| № | Требование | Статус |
+|---|------------|--------|
+| 1 | 3–5 агентов на Go | ✅ Универсальный агент с 4 типами задач |
+| 2 | Цепочка задач (pipeline) | ✅ 4 шага последовательно |
+| 3 | Распределённая трассировка (Jaeger) | ✅ OpenTelemetry + Jaeger |
+| 4 | Агент с состоянием (Redis) | ✅ Сохранение/восстановление |
+| 5 | Динамическое масштабирование | ✅ Мониторинг очереди + Docker API |
+| 6 | Аукционное распределение | ✅ Ставки, выбор лучшего агента |
+| 7 | Интеграция LLM-агента | ✅ Ollama + кэширование |
+| 8 | Веб-интерфейс мониторинга | ✅ Streamlit дашборд |
